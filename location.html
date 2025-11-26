@@ -1,46 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Location</title>
+    <title>Live Location</title>
 </head>
 <body>
-  <h2>Get Real-Time Location</h2>
+    <h2>Get Real-Time Location</h2>
 
-  <button onclick="getLocation()">Get Location</button>
+    <button onclick="getLocation()">Get Location</button>
+    <p id="status"></p>
 
-  <p id="status"></p>
-
-  <script>
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition, showError);
-      } else {
+<script>
+async function getLocation() {
+    if (!navigator.geolocation) {
         document.getElementById("status").innerHTML = "Geolocation not supported!";
-      }
+        return;
     }
 
-    function showPosition(position) {
-      let lat = position.coords.latitude;
-      let lon = position.coords.longitude;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        let lat = pos.coords.latitude;
+        let lon = pos.coords.longitude;
 
-      document.getElementById("status").innerHTML = 
-        "Location fetched! Latitude: " + lat + " Longitude: " + lon;
+        document.getElementById("status").innerHTML =
+            "Fetched! Lat: " + lat + "  Lon: " + lon;
 
-      // File format required for C++
-      let data = lat + " " + lon;
+        let data = lat + " " + lon;
 
-      // Force file name to usedata.txt
-      let blob = new Blob([data], { type: "text/plain" });
-      let link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "usedata.txt";
-      link.click();
-    }
+        // Try to force download using File System API (mobile compatible)
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: "usedata.txt",
+                types: [{
+                    description: "Text",
+                    accept: { "text/plain": [".txt"] }
+                }]
+            });
 
-    function showError(error) {
-      document.getElementById("status").innerHTML = "Error getting location!";
-    }
-  </script>
+            const writable = await handle.createWritable();
+            await writable.write(data);
+            await writable.close();
+
+        } catch (e) {
+            // fallback normal download
+            let blob = new Blob([data], { type: "text/plain" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "usedata.txt";
+            link.click();
+        }
+
+    });
+}
+</script>
 
 </body>
 </html>
