@@ -1,53 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Location</title>
+    <title>Send Mobile GPS to C++</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            font-family: Arial;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button{
+            padding: 15px 25px;
+            font-size: 18px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Get Real-Time Location</h2>
 
-    <button onclick="getLocation()">Get Location</button>
-    <p id="status"></p>
+<h2>Send Mobile GPS to C++ Program</h2>
+<p>Press the button to send your real-time location.</p>
+
+<button onclick="sendLocation()">Send Location</button>
+
+<p id="status" style="margin-top:20px; font-size:18px; color:green;"></p>
 
 <script>
-async function getLocation() {
-    if (!navigator.geolocation) {
-        document.getElementById("status").innerHTML = "Geolocation not supported!";
+function sendLocation(){
+
+    if(!navigator.geolocation){
+        alert("Your device does not support GPS.");
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        let lat = pos.coords.latitude;
-        let lon = pos.coords.longitude;
+    document.getElementById('status').innerText = "Getting GPS location...";
 
-        document.getElementById("status").innerHTML =
-            "Fetched! Lat: " + lat + "  Lon: " + lon;
+    navigator.geolocation.getCurrentPosition(function(position){
 
-        let data = lat + " " + lon;
+        let lat = position.coords.latitude;
+        let lon = position.coords.longitude;
 
-        // Try to force download using File System API (mobile compatible)
-        try {
-            const handle = await window.showSaveFilePicker({
-                suggestedName: "usedata.txt",
-                types: [{
-                    description: "Text",
-                    accept: { "text/plain": [".txt"] }
-                }]
-            });
+        // Text that will be saved in file
+        let text = lat + "," + lon;
 
-            const writable = await handle.createWritable();
-            await writable.write(data);
-            await writable.close();
+        // Create a downloadable file
+        let blob = new Blob([text], { type: "text/plain" });
+        let url = URL.createObjectURL(blob);
 
-        } catch (e) {
-            // fallback normal download
-            let blob = new Blob([data], { type: "text/plain" });
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "usedata.txt";
-            link.click();
-        }
+        let link = document.createElement("a");
+        link.href = url;
+        link.download = "mobile_location.txt";
+        link.click();
 
+        document.getElementById('status').innerText =
+            "Location Sent: " + lat.toFixed(6) + ", " + lon.toFixed(6);
+
+    }, function(error){
+        alert("GPS Permission Denied or Not Available.");
     });
 }
 </script>
